@@ -12,11 +12,11 @@ Make sure you have all dependencies installed, then start the backend with:
 python app.py
 ```
 
-This will start the Flask server at `http://localhost:5000`.
+This will start the Flask server at `http://localhost:4000`.
 
 ### 2. Set Up Node-RED
 
-- Open [Node-RED](http://localhost:1880) in your browser.
+- Open Node-RED at `http://localhost:1880` in your browser.
 - Import the pre-built flow:
 
   1. Open the menu (top right) → *Import*.
@@ -30,7 +30,7 @@ This will start the Flask server at `http://localhost:5000`.
 - After processing, the results will be available at:
 
 ```
-http://localhost:5000/table
+http://localhost:4000/table
 ```
 
 This page displays the output of your Spark pipeline in an HTML table.
