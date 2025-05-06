@@ -1,0 +1,557 @@
+[
+    {
+        "id": "b7de25c632c5b210",
+        "type": "tab",
+        "label": "Flow 7",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "30555ea0585215c8",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Map Operation",
+        "func": "let step = {\n    operation: \"map\",\n    field: \"sum_amount\",\n    // multiply_by: 2\n    rename: \"total_fare\"\n    //drop: \"city\"\n    \n};\n\nlet previous = msg.payload?.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 240,
+        "wires": [
+            [
+                "d858ab6446b9a181"
+            ]
+        ]
+    },
+    {
+        "id": "d858ab6446b9a181",
+        "type": "http request",
+        "z": "b7de25c632c5b210",
+        "name": "Send to Flask Backend",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://127.0.0.1:4000/submit_pipeline",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "other",
+                "valueValue": ""
+            }
+        ],
+        "x": 630,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "33ed5e8974727a26",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Orderby Operation",
+        "func": "let step = {\n    operation: \"orderBy\",\n    columns: [\"sum_amount\"],          \n    ascending: true           \n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 100,
+        "wires": [
+            [
+                "30555ea0585215c8"
+            ]
+        ]
+    },
+    {
+        "id": "c9139ede226201c1",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Groupby Operation",
+        "func": "let step = {\n    operation: \"groupBy\",\n    group_field: \"flight_id\",\n    agg_field: \"amount\",\n    agg_func: \"sum\"\n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 100,
+        "wires": [
+            [
+                "33ed5e8974727a26"
+            ]
+        ]
+    },
+    {
+        "id": "9a743366d25503ba",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Join Operation",
+        "func": "let step = {\n    operation: \"join\",\n    left: \"aircrafts\",\n    right: \"seats\",\n    on: \"aircraft_code\",\n    how: \"inner\"             \n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 960,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9e13eab798c9f2ab",
+        "type": "inject",
+        "z": "b7de25c632c5b210",
+        "name": "Read CSV",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"pipeline\":[{\"operation\":\"read_csv\",\"path\":\"data/ticket_flights.csv\",\"name\":\"tickets\"}]}",
+        "payloadType": "json",
+        "x": 180,
+        "y": 100,
+        "wires": [
+            [
+                "c9139ede226201c1"
+            ]
+        ]
+    },
+    {
+        "id": "97d7133d4bcae843",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Read 2nd CSV",
+        "func": "let readStep = {\n    operation: \"read_csv\",\n    path: \"data/seats.csv\",\n    name: \"seats\"\n};\n\nlet steps = msg.payload.pipeline || [];\nsteps.unshift(readStep);\n\nmsg.payload = {\n    pipeline: steps\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 960,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "523cea5e92ef1cb4",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Map Operation",
+        "func": "let step = {\n    operation: \"map\",\n    field: \"fare_conditions\",\n    //multiply_by: 2\n    rename: \"fare\"\n    // drop: \"city\"\n    \n};\n\nlet previous = msg.payload?.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 620,
+        "wires": [
+            [
+                "ae719e042217ae1b"
+            ]
+        ]
+    },
+    {
+        "id": "ae719e042217ae1b",
+        "type": "http request",
+        "z": "b7de25c632c5b210",
+        "name": "Send to Flask Backend",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://127.0.0.1:4000/submit_pipeline",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "other",
+                "valueValue": ""
+            }
+        ],
+        "x": 950,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7055c72694ce86a5",
+        "type": "inject",
+        "z": "b7de25c632c5b210",
+        "name": "Read CSV",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"pipeline\":[{\"operation\":\"read_csv\",\"path\":\"data/tickets.csv\",\"name\":\"tickets\"}]}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 620,
+        "wires": [
+            [
+                "73f8e3e39b2d0fb7"
+            ]
+        ]
+    },
+    {
+        "id": "5760eeb91f0719c7",
+        "type": "inject",
+        "z": "b7de25c632c5b210",
+        "name": "Read CSV",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"pipeline\":[{\"operation\":\"read_csv\",\"path\":\"data/boarding_passes.csv\",\"name\":\"boarding\"}]}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 800,
+        "wires": [
+            [
+                "d67bea4701eda0f1"
+            ]
+        ]
+    },
+    {
+        "id": "f6360a0366262edc",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Orderby Operation",
+        "func": "let step = {\n    operation: \"orderBy\",\n    columns: [\"sum_amount\"],          \n    ascending: true           \n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d67bea4701eda0f1",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Groupby Operation",
+        "func": "let step = {\n    operation: \"groupBy\",\n    group_field: \"flight_id\",\n    agg_field: \"boarding_no\",\n    agg_func: \"count\"\n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 800,
+        "wires": [
+            [
+                "f2efd2a87801acf8"
+            ]
+        ]
+    },
+    {
+        "id": "1b752122585c9e0e",
+        "type": "inject",
+        "z": "b7de25c632c5b210",
+        "name": "Read CSV",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"pipeline\":[{\"operation\":\"read_csv\",\"path\":\"data/ticket_flights.csv\",\"name\":\"tickets\"}]}",
+        "payloadType": "json",
+        "x": 940,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c283b95993e02ccf",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Groupby Operation",
+        "func": "let step = {\n    operation: \"groupBy\",\n    group_field: \"flight_id\",\n    agg_field: \"amount\",\n    agg_func: \"sum\"\n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f2efd2a87801acf8",
+        "type": "http request",
+        "z": "b7de25c632c5b210",
+        "name": "Send to Flask Backend",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://127.0.0.1:4000/submit_pipeline",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "other",
+                "valueValue": ""
+            }
+        ],
+        "x": 670,
+        "y": 800,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "88a8fed5c9d5191e",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Filter Operation",
+        "func": "let step = {\n    operation: \"filter\",\n    field: \"count_ticket_no\",\n    operator: \">\",\n    value: 4\n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 940,
+        "wires": [
+            [
+                "01a6bb916e24f2fd"
+            ]
+        ]
+    },
+    {
+        "id": "8360ca8f5d8d06ea",
+        "type": "inject",
+        "z": "b7de25c632c5b210",
+        "name": "Read CSV",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"pipeline\":[{\"operation\":\"read_csv\",\"path\":\"data/tickets.csv\",\"name\":\"tickets\"}]}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 940,
+        "wires": [
+            [
+                "7a833f05c249feba"
+            ]
+        ]
+    },
+    {
+        "id": "7a833f05c249feba",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Groupby Operation",
+        "func": "let step = {\n    operation: \"groupBy\",\n    group_field: \"book_ref\",\n    agg_field: \"ticket_no\",\n    agg_func: \"count\"\n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 940,
+        "wires": [
+            [
+                "88a8fed5c9d5191e"
+            ]
+        ]
+    },
+    {
+        "id": "01a6bb916e24f2fd",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Map Operation",
+        "func": "let step = {\n    operation: \"map\",\n    field: \"count_ticket_no\",\n    //multiply_by: 2\n    rename: \"passenger_count\"\n    // drop: \"city\"\n    \n};\n\nlet previous = msg.payload?.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 940,
+        "wires": [
+            [
+                "121965ff337118e3"
+            ]
+        ]
+    },
+    {
+        "id": "121965ff337118e3",
+        "type": "http request",
+        "z": "b7de25c632c5b210",
+        "name": "Send to Flask Backend",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://127.0.0.1:4000/submit_pipeline",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "other",
+                "valueValue": ""
+            }
+        ],
+        "x": 990,
+        "y": 940,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0c1140f80d884e37",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Filter Operation",
+        "func": "let step = {\n    operation: \"filter\",\n    field: \"amount\",\n    operator: \">\",\n    value: 500\n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 960,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "73f8e3e39b2d0fb7",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Read 2nd CSV",
+        "func": "let readStep = {\n    operation: \"read_csv_2\",\n    path: \"data/ticket_flights.csv\",\n    name: \"flights\"\n};\n\nlet steps = msg.payload.pipeline || [];\nsteps.push(readStep);\n\nmsg.payload = {\n    pipeline: steps\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 620,
+        "wires": [
+            [
+                "260962dc01854581"
+            ]
+        ]
+    },
+    {
+        "id": "260962dc01854581",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Join Operation",
+        "func": "let step = {\n    operation: \"join\",\n    table1: \"tickets\",\n    table2: \"flights\",\n    on: \"ticket_no\",\n};\n\nlet previous = msg.payload.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 620,
+        "wires": [
+            [
+                "523cea5e92ef1cb4"
+            ]
+        ]
+    },
+    {
+        "id": "83e92e150e7db7d7",
+        "type": "function",
+        "z": "b7de25c632c5b210",
+        "name": "Map Operation",
+        "func": "let step = {\n    operation: \"map\",\n    field: \"count_ticket_no\",\n    //multiply_by: 2\n    rename: \"passenger_count\"\n    // drop: \"city\"\n    \n};\n\nlet previous = msg.payload?.pipeline || [];\nprevious.push(step);\n\nmsg.payload = {\n    pipeline: previous\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 960,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    }
+]
